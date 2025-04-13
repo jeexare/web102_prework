@@ -28,27 +28,29 @@ const gamesContainer = document.getElementById("games-container");
 // create a function that adds all data from the games array to the page
 function addGamesToPage(games) {
 
-    // loop over each item in the data
-
-
+     // loop over each item in the data
+    for (let i = 0; i < games.length; i++){
         // create a new div element, which will become the game card
-
-
+        let myGameDiv =  document.createElement('div');
         // add the class game-card to the list
-
-
+        myGameDiv.classList.add('game-card');
         // set the inner HTML using a template literal to display some info 
         // about each game
         // TIP: if your images are not displaying, make sure there is space
         // between the end of the src attribute and the end of the tag ("/>")
-
+        myGameDiv.innerHTML = `<img class="game-img" src="${games[i].img}">
+        <h1>${games[i].name}</h1>
+        <h2>${games[i].description}</h2>`;
 
         // append the game to the games-container
+        gamesContainer.appendChild(myGameDiv);
+}
 
 }
 
 // call the function we just defined using the correct variable
 // later, we'll call this function using a different list of games
+addGamesToPage(GAMES_JSON);
 
 
 /*************************************************************************************
@@ -61,20 +63,25 @@ function addGamesToPage(games) {
 const contributionsCard = document.getElementById("num-contributions");
 
 // use reduce() to count the number of total contributions by summing the backers
-
+const totalContributions = GAMES_JSON.reduce((acc, game) => {
+    return acc + game.backers;
+}, 0);
 
 // set the inner HTML using a template literal and toLocaleString to get a number with commas
-
+contributionsCard.innerHTML = `${totalContributions.toLocaleString('en-US')}`;
 
 // grab the amount raised card, then use reduce() to find the total amount raised
 const raisedCard = document.getElementById("total-raised");
+const totalRaised = GAMES_JSON.reduce((acc, game) => {
+    return acc + game.pledged;
+}, 0);
 
 // set inner HTML using template literal
-
+raisedCard.innerHTML = `$${totalRaised.toLocaleString('en-US')}`
 
 // grab number of games card and set its inner HTML
 const gamesCard = document.getElementById("num-games");
-
+gamesCard.innerHTML = `${GAMES_JSON.length}`;
 
 /*************************************************************************************
  * Challenge 5: Add functions to filter the funded and unfunded games
@@ -87,9 +94,12 @@ function filterUnfundedOnly() {
     deleteChildElements(gamesContainer);
 
     // use filter() to get a list of games that have not yet met their goal
-
+    const unfundedGames = GAMES_JSON.filter((game) => {
+        return game.pledged < game.goal;
+    });
 
     // use the function we previously created to add the unfunded games to the DOM
+    addGamesToPage(unfundedGames);
 
 }
 
@@ -98,17 +108,21 @@ function filterFundedOnly() {
     deleteChildElements(gamesContainer);
 
     // use filter() to get a list of games that have met or exceeded their goal
-
+    const fundedGames = GAMES_JSON.filter((game) => {
+        return game.pledged >= game.goal;
+    });
 
     // use the function we previously created to add unfunded games to the DOM
-
+    addGamesToPage(fundedGames);
 }
+
 
 // show all games
 function showAllGames() {
     deleteChildElements(gamesContainer);
 
     // add all games from the JSON data to the DOM
+    addGamesToPage(GAMES_JSON);
 
 }
 
@@ -118,6 +132,9 @@ const fundedBtn = document.getElementById("funded-btn");
 const allBtn = document.getElementById("all-btn");
 
 // add event listeners with the correct functions to each button
+unfundedBtn.addEventListener("click", filterUnfundedOnly);
+fundedBtn.addEventListener("click", filterFundedOnly);
+allBtn.addEventListener("click", showAllGames);
 
 
 /*************************************************************************************
@@ -129,12 +146,18 @@ const allBtn = document.getElementById("all-btn");
 const descriptionContainer = document.getElementById("description-container");
 
 // use filter or reduce to count the number of unfunded games
-
+const totalUnfundedGames = GAMES_JSON.reduce((acc, game) => {
+if (game.pledged < game.goal) acc += 1;
+return acc;
+}, 0);
 
 // create a string that explains the number of unfunded games using the ternary operator
-
+const helpNeeded = `${totalUnfundedGames === 1 ? totalUnfundedGames + " game" : totalUnfundedGames + " games"} remain unfunded.`;
 
 // create a new DOM element containing the template string and append it to the description container
+let myDescription = document.createElement('p');
+myDescription.innerHTML = helpNeeded;
+descriptionContainer.appendChild(myDescription);
 
 /************************************************************************************
  * Challenge 7: Select & display the top 2 games
@@ -149,7 +172,58 @@ const sortedGames =  GAMES_JSON.sort( (item1, item2) => {
 });
 
 // use destructuring and the spread operator to grab the first and second games
+const [firstGame, secondGame] = [...sortedGames];
 
 // create a new element to hold the name of the top pledge game, then append it to the correct element
+const firstGameName = document.createElement('p')
+firstGameName.innerHTML = firstGame.name;
+firstGameContainer.appendChild(firstGameName);
+
+const secondGameName = document.createElement('p');
+secondGameName.innerHTML = secondGame.name;
+secondGameContainer.appendChild(secondGameName);
 
 // do the same for the runner up item
+
+/************************************* TODO: Search bar functions */
+// search bar
+const searchBar = document.getElementById('search-bar');
+
+searchBar.addEventListener("keyup", (e) => {
+    deleteChildElements(gamesContainer);
+    const myInput = searchBar.value.toUpperCase();
+
+    console.log(myInput);
+
+    const foundGames = GAMES_JSON.filter((game) => {
+        return game.name.toUpperCase().includes(myInput);
+});
+
+    addGamesToPage(foundGames);
+})
+
+/************************************* TODO: Dark mode vs light mode functions */
+const switchModeBtn = document.getElementById("switch-mode");
+if (localStorage.getItem("darkMode")) switchToDark();
+
+function switchToDark() {
+    // append .dark-mode to body
+    document.body.classList.add('dark-mode');
+    // add darkMode to local storage
+    localStorage.setItem("darkMode", "true");
+    // change the content of the button
+    switchModeBtn.innerHTML = 'Switch to Light Mode';
+}
+
+function switchToLight() {
+    document.body.classList.remove('dark-mode');
+    localStorage.removeItem("darkMode", "true");
+    switchModeBtn.innerHTML = 'Switch to Dark Mode';
+
+}
+
+switchModeBtn.addEventListener("click", (e) => {
+    if (localStorage.getItem("darkMode")) switchToLight();
+    else switchToDark();
+}
+);
